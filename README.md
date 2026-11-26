@@ -1,29 +1,28 @@
-# Merry Christmas Max, by Amber
+# Christmas Magic
 
-A browser-based Christmas greeting with an emerald green particle tree, ruby red spiral ribbons, orange ornaments, falling snow and a golden star.
+An interactive Christmas greeting. The only greeting displayed is **Merry Christmas**.
 
-Open the published page directly — no installation, login or external libraries required.
+[Open the interactive page](https://ambergao355-bit.github.io/christmas-magic/)
 
-Drag to rotate; scroll to zoom. Use Pause / Play and Reset in the lower corner. The page adapts to phone screens and respects reduced-motion preferences.
+## Shapes
 
-The original Python version was adapted from [Pink-Gold-Christmas-Tree](https://github.com/zhufeng13579-lab/Pink-Gold-Christmas-Tree). The standalone WebGL page is a browser implementation created for Amber's greeting to Max.
+- **Tree**: natural green pine branches, warm white lights, champagne ribbons and silver/gold ornaments.
+- **Wreath**: pine foliage with red, blush pink and pale blue bows, plus gold stars.
+- **Spiral**: the original full green particle tree with red spiral light ribbons and orange ornaments.
+- **Star**: a golden particle star.
 
+Choose a shape with the buttons. Drag to rotate and scroll to zoom. Optional camera gestures: fist → Tree, open palm → Wreath, pinch → Star. Camera video is processed locally; hand tracking downloads MediaPipe runtime/model files from jsDelivr and Google when enabled.
 
-## Interactive Christmas shapes
+## Run locally
 
-[Open the English shape-changing version](https://ambergao355-bit.github.io/christmas-for-max/magic.html).
+```sh
+python3 -m http.server 8000
+```
 
-- Tree, wreath with red bow, spiral tree, and golden star, with smooth transitions.
-- English interface with only “Merry Christmas” as the greeting.
-- Shape buttons work without a camera. Optional hand tracking: fist → Tree, open palm → Wreath, pinch → Star.
-- Camera video is processed locally. Hand tracking downloads MediaPipe runtime/model files from jsDelivr and Google on request.
-- No photos, uploads, accounts or stored camera footage.
+Open `http://localhost:8000/`. Camera access requires localhost or HTTPS. No photos or uploads are used.
 
-Serve this folder over HTTP for local development (`python3 -m http.server 8000`), then open `/magic.html`. Camera access requires localhost or HTTPS.
+Direct links can select a starting shape: `?shape=tree`, `?shape=wreath`, `?shape=spiral`, or `?shape=star`. The `/magic.html` path also works.
 
+## Source
 
-## Natural evergreen styling
-
-The Tree and Wreath modes now use procedural 3D pine needles and branches, softly lit metallic stars, and satin ribbon geometry. Tree decorations use champagne and silver with warm white lights. Wreath decorations use red, blush pink and pale blue bows plus gold stars. The reference photos guide the design but are not embedded or uploaded.
-
-Direct links can select the initial shape with `?shape=tree`, `?shape=wreath`, `?shape=spiral`, or `?shape=star`.
+The original Python animation was adapted from [Pink-Gold-Christmas-Tree](https://github.com/zhufeng13579-lab/Pink-Gold-Christmas-Tree). The browser implementation adds procedural pine geometry, satin ribbons, metallic decorations, particle transformations and optional MediaPipe hand tracking. Reference photos inform the design and are not embedded or uploaded.

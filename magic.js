@@ -15,7 +15,8 @@ float h=fract(sin(q*12.9898)*43758.5453);float j=fract(sin(q*4.137)*12345.678);
 float theta=aPhase;float tube=(k==2.)?.53:(.26+.43*h);float beta=(k==2.)?theta*9.:q;
 vec3 wreath=vec3((3.25+tube*cos(beta))*sin(theta),tube*sin(beta),4.6+(3.25+tube*cos(beta))*cos(theta));
 float t=clamp((aPos.z-.88)/8.62,0.,1.);float r=3.72*pow(1.-t,.9);float spiralAngle=t*6.2831853*3.3;float fuzz=(h-.5)*((k==2.)?.10:.38);
-vec3 spiral=vec3((r+fuzz)*cos(spiralAngle),(r+fuzz)*sin(spiralAngle),.88+8.62*t+(j-.5)*.18);
+// Spiral retains the original full green particle tree and red light ribbons.
+vec3 spiral=aPos;
 float edge=floor(theta/6.2831853*10.);float f=fract(theta/6.2831853*10.);float aa=edge*.62831853;float ab=(edge+1.)*.62831853;float ra=mod(edge,2.)<.5?3.9:1.75;float rb=mod(edge+1.,2.)<.5?3.9:1.75;
 vec2 outline=mix(vec2(sin(aa),cos(aa))*ra,vec2(sin(ab),cos(ab))*rb,f);
 float fill=(k==2.)?1.:sqrt(.05+.95*h);vec3 star=vec3(outline.x*fill,(j-.5)*.55,4.6+outline.y*fill);
@@ -28,7 +29,7 @@ gl_PointSize=clamp(aSize*uScale/depth,1.,k==9.?160.:36.);
 vCol=mix(aCol,vec3(1.15,.70,.13),uWeights.w*.85);float natural=uWeights.x+uWeights.y;
 if(k==1.||k==2.)vCol*=1.-natural;
 if(k==3.||k==4.)vCol=mix(vCol,vec3(.95,.80,.48)*.72,natural);
-if(k==0.)vCol*=.18;if(k==5.)vCol*=.45;
+if(k==0.)vCol*=mix(.18,1.,uWeights.z);if(k==5.)vCol*=mix(.45,1.,uWeights.z);
 if(k==9.)vCol*=uWeights.z;if(k==6.)vCol*=0.;vKind=k;vPhase=aPhase;}`;
 const fs=`precision mediump float;varying vec3 vCol;varying float vKind;varying float vPhase;uniform float uTime;
 float star(vec2 p){vec2 a=vec2(0.,.82);float inside=0.;float md=10.;for(int i=1;i<=10;i++){float t=float(i)*.62831853;float r=mod(float(i),2.)<.5?.82:.36;vec2 b=vec2(sin(t),cos(t))*r;vec2 e=b-a;vec2 w=p-a;md=min(md,length(w-e*clamp(dot(w,e)/dot(e,e),0.,1.)));if((a.y>p.y)!=(b.y>p.y)){float x=a.x+(p.y-a.y)*(b.x-a.x)/(b.y-a.y);if(p.x<x)inside=1.-inside;}a=b;}return inside>.5?-md:md;}
