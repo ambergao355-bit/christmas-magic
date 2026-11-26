@@ -1,6 +1,8 @@
 
 import {classifyHand,stableGesture} from './gestures.mjs';
-'use strict';
+import {createBotanicalRenderer} from './botanical.mjs?v=natural-2';
+ 'use strict';
+addEventListener('error',()=>{document.getElementById('fallback').hidden=false;});
 (()=>{
 const canvas=document.getElementById('scene'), gl=canvas.getContext('webgl',{alpha:false,antialias:false,powerPreference:'low-power'});
 if(!gl){document.getElementById('fallback').hidden=false;return;}
@@ -19,11 +21,15 @@ vec2 outline=mix(vec2(sin(aa),cos(aa))*ra,vec2(sin(ab),cos(ab))*rb,f);
 float fill=(k==2.)?1.:sqrt(.05+.95*h);vec3 star=vec3(outline.x*fill,(j-.5)*.55,4.6+outline.y*fill);
 p=aPos*uWeights.x+wreath*uWeights.y+spiral*uWeights.z+star*uWeights.w;
 }
-float ang=uYaw+((k==0.)?uTime*.008:(uTime*.035*(uWeights.x+uWeights.z)+sin(uTime*.20)*.16*(uWeights.y+uWeights.w)));float c=cos(ang),s=sin(ang);vec2 xy=mat2(c,-s,s,c)*p.xy;p.xy=xy;
+float ang=uYaw+((k==0.)?uTime*.008:(uTime*.035*uWeights.z+sin(uTime*.09)*.16*uWeights.x+sin(uTime*.13)*.11*uWeights.y+sin(uTime*.20)*.16*uWeights.w));float c=cos(ang),s=sin(ang);vec2 xy=mat2(c,-s,s,c)*p.xy;p.xy=xy;
 float z=p.z-4.1;float depth=uDistance+p.y*cos(uPitch)-z*sin(uPitch);float y=p.y*sin(uPitch)+z*cos(uPitch);
 float f=2.35;gl_Position=vec4(p.x*f/uAspect+(1.-uMobile)*depth*.22,y*f-uMobile*depth*.20,depth*.01,depth);
 gl_PointSize=clamp(aSize*uScale/depth,1.,k==9.?160.:36.);
-vCol=mix(aCol,vec3(1.15,.70,.13),uWeights.w*.85);if(k==9.)vCol*=uWeights.x+uWeights.z;if(k==6.)vCol*=uWeights.y;vKind=k;vPhase=aPhase;}`;
+vCol=mix(aCol,vec3(1.15,.70,.13),uWeights.w*.85);float natural=uWeights.x+uWeights.y;
+if(k==1.||k==2.)vCol*=1.-natural;
+if(k==3.||k==4.)vCol=mix(vCol,vec3(.95,.80,.48)*.72,natural);
+if(k==0.)vCol*=.18;if(k==5.)vCol*=.45;
+if(k==9.)vCol*=uWeights.z;if(k==6.)vCol*=0.;vKind=k;vPhase=aPhase;}`;
 const fs=`precision mediump float;varying vec3 vCol;varying float vKind;varying float vPhase;uniform float uTime;
 float star(vec2 p){vec2 a=vec2(0.,.82);float inside=0.;float md=10.;for(int i=1;i<=10;i++){float t=float(i)*.62831853;float r=mod(float(i),2.)<.5?.82:.36;vec2 b=vec2(sin(t),cos(t))*r;vec2 e=b-a;vec2 w=p-a;md=min(md,length(w-e*clamp(dot(w,e)/dot(e,e),0.,1.)));if((a.y>p.y)!=(b.y>p.y)){float x=a.x+(p.y-a.y)*(b.x-a.x)/(b.y-a.y);if(p.x<x)inside=1.-inside;}a=b;}return inside>.5?-md:md;}
 void main(){vec2 p=gl_PointCoord*2.-1.;float r=dot(p,p);if(r>1.)discard;float k=vKind;float pulse=.85+.15*sin(uTime*1.7+vPhase*7.);vec3 col=vCol;float light;
@@ -45,18 +51,20 @@ for(let i=0;i<5000;i++){let t=rand()*.94,p=helix(t);add(p[0]+mix(-.12,.12),p[1]+
 for(let i=0;i<730;i++){let t=rand()*.93,r=3.72*Math.pow(1-t,.9)*Math.sqrt(mix(.15,1)),a=rand()*6.283;add(r*Math.cos(a),r*Math.sin(a),.88+8.62*t,[mix(1.3,2.),mix(.35,.72),mix(.025,.09)],mix(.12,.30),i%5?3:4);}
 // A wide, feathered galaxy floor with broken orbital rings.
 for(let i=0;i<24000;i++){let ring=Math.floor(rand()*12),base=2+ring*1.12,a=rand()*6.283,r=i%3?base+mix(-.18,.18):Math.sqrt(mix(5,260)),fade=Math.max(.08,1-Math.pow(r/18,3)),v=mix(.55,1.65)*fade;add(r*Math.cos(a),r*Math.sin(a),mix(-.03,.06),[v,v*mix(.4,.7),v*.13],mix(.035,.105),0);}
-for(let i=0;i<750;i++){let a=rand()*6.283,r=Math.sqrt(mix(9,260));add(r*Math.cos(a),r*Math.sin(a),.08,[1.1,.55,.12],mix(.09,.18),4);}
+for(let i=0;i<750;i++){let a=rand()*6.283,r=Math.sqrt(mix(9,260));add(r*Math.cos(a),r*Math.sin(a),.08,[1.1,.55,.12],mix(.09,.18),0);}
 // Floating stars and falling snow.
 for(let i=0;i<1500;i++){add(mix(-32,32),mix(-15,28),mix(-4,28),[mix(.5,1.1),mix(.35,.7),mix(.15,.38)],mix(.06,.15),5);}
 // A ruby ribbon bow appears at the top of the wreath.
 for(let i=0;i<1800;i++){let a=rand()*6.283,side=i%2?1:-1;add(side*(.14+.88*(1-Math.cos(a))*.5),mix(-.08,.08),7.68+.40*Math.sin(a)+mix(-.06,.06),[1.4,.018,.045],mix(.045,.085),6);}
 for(let i=0;i<600;i++){let t=rand(),side=i%2?1:-1;add(side*(.12+t*.5)+mix(-.08,.08),mix(-.09,.09),7.65-t*1.12,[1.2,.015,.035],mix(.04,.075),6);}
 add(0,0,9.93,[1.,.65,.15],2.5,9);
-const data=new Float32Array(points);gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
-for(const [name,n,offset]of[['aPos',3,0],['aCol',3,3],['aSize',1,6],['aKind',1,7],['aPhase',1,8]]){const loc=gl.getAttribLocation(program,name);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,n,gl.FLOAT,false,9*4,offset*4);}
+const data=new Float32Array(points);const particleBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,particleBuffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+const particleAttributes=[['aPos',3,0],['aCol',3,3],['aSize',1,6],['aKind',1,7],['aPhase',1,8]].map(([name,n,offset])=>({loc:gl.getAttribLocation(program,name),n,offset}));
+function bindParticles(){for(let i=0;i<8;i++)gl.disableVertexAttribArray(i);gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,particleBuffer);for(const a of particleAttributes){gl.enableVertexAttribArray(a.loc);gl.vertexAttribPointer(a.loc,a.n,gl.FLOAT,false,36,a.offset*4);}}
+const botanical=createBotanicalRenderer(gl);
 const uniforms={};for(const n of['uTime','uYaw','uPitch','uDistance','uAspect','uScale','uMobile','uWeights'])uniforms[n]=gl.getUniformLocation(program,n);
 gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.clearColor(.002,.008,.005,1);
-let targetShape=0;const shapeWeights=[1,0,0,0];
+let animationRequest=0;let targetShape=Math.max(0,['tree','wreath','spiral','star'].indexOf(new URLSearchParams(location.search).get('shape')));const shapeWeights=[0,1,2,3].map(i=>i===targetShape?1:0);
 let yaw=0,pitch=.43,distance=23,time=0,last=0,paused=matchMedia('(prefers-reduced-motion: reduce)').matches,drag=null;
 const button=document.getElementById('motion');function syncButton(){button.textContent=paused?'▶':'Ⅱ';button.setAttribute('aria-label',paused?'Play animation':'Pause animation');button.setAttribute('aria-pressed',String(paused));}syncButton();button.onclick=()=>{paused=!paused;syncButton();};
 canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);};canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.006;pitch=Math.min(1.05,Math.max(-.05,pitch+(e.clientY-drag[1])*.004));drag=[e.clientX,e.clientY];};canvas.onpointerup=canvas.onpointercancel=()=>{drag=null;};canvas.addEventListener('wheel',e=>{e.preventDefault();distance=Math.min(34,Math.max(16,distance+e.deltaY*.012));},{passive:false});
@@ -74,8 +82,8 @@ function trackHands(now){if(!stream||!detector||$('webcam').readyState<2||now-la
 function drawHand(points){const c=$('hand-overlay');c.width=$('webcam').videoWidth||640;c.height=$('webcam').videoHeight||480;const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);if(!points)return;ctx.strokeStyle='#dfc992';ctx.lineWidth=2;for(const chain of[[0,1,2,3,4],[0,5,6,7,8],[5,9,10,11,12],[9,13,14,15,16],[13,17,18,19,20],[0,17]]){ctx.beginPath();chain.forEach((i,j)=>{const p=points[i];if(j)ctx.lineTo(p.x*c.width,p.y*c.height);else ctx.moveTo(p.x*c.width,p.y*c.height);});ctx.stroke();}ctx.fillStyle='#b8ddaf';for(const p of points){ctx.beginPath();ctx.arc(p.x*c.width,p.y*c.height,3,0,Math.PI*2);ctx.fill();}}
 addEventListener('pagehide',stopCamera);
 
-function frame(now){const dt=last?Math.min((now-last)/1000,.08):0;last=now;if(!paused)time+=dt;shapeWeights.forEach((v,i)=>shapeWeights[i]=v+((i===targetShape?1:0)-v)*(1-Math.exp(-dt*3.4)));const mobile=innerWidth<760,dpr=Math.min(devicePixelRatio||1,2),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}gl.clear(gl.COLOR_BUFFER_BIT);gl.uniform1f(uniforms.uTime,time);gl.uniform1f(uniforms.uYaw,yaw);gl.uniform1f(uniforms.uPitch,pitch);gl.uniform1f(uniforms.uDistance,mobile?distance+16:distance);gl.uniform1f(uniforms.uAspect,w/h);gl.uniform1f(uniforms.uScale,h*1.17);gl.uniform1f(uniforms.uMobile,mobile?1:0);gl.uniform4fv(uniforms.uWeights,shapeWeights);gl.drawArrays(gl.POINTS,0,data.length/9);trackHands(now);requestAnimationFrame(frame);}
-requestAnimationFrame(frame);
+function frame(now){const dt=last?Math.min((now-last)/1000,.08):0;last=now;if(!paused)time+=dt;shapeWeights.forEach((v,i)=>shapeWeights[i]=v+((i===targetShape?1:0)-v)*(1-Math.exp(-dt*3.4)));const mobile=innerWidth<760,dpr=Math.min(devicePixelRatio||1,2),w=Math.round(innerWidth*dpr),h=Math.round(innerHeight*dpr);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h);}gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);botanical.draw({yaw,pitch,distance:mobile?distance+16:distance,aspect:w/h,mobile,time,weights:shapeWeights});bindParticles();gl.uniform1f(uniforms.uTime,time);gl.uniform1f(uniforms.uYaw,yaw);gl.uniform1f(uniforms.uPitch,pitch);gl.uniform1f(uniforms.uDistance,mobile?distance+16:distance);gl.uniform1f(uniforms.uAspect,w/h);gl.uniform1f(uniforms.uScale,h*1.17);gl.uniform1f(uniforms.uMobile,mobile?1:0);gl.uniform4fv(uniforms.uWeights,shapeWeights);gl.drawArrays(gl.POINTS,0,data.length/9);trackHands(now);animationRequest=requestAnimationFrame(frame);}
+addEventListener('visibilitychange',()=>{if(!document.hidden){cancelAnimationFrame(animationRequest);last=0;frame(performance.now());}});setShape(targetShape);frame(performance.now());
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();document.getElementById('fallback').hidden=false;});
 }catch(error){console.error(error);document.getElementById('fallback').hidden=false;}
 })();
